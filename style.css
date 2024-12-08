@@ -1,0 +1,127 @@
+/* Reset default browser styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body styling with a soft, business-like background */
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(to bottom, #f7f7f7, #e0e0e0);
+    color: #333333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Container for all content */
+.container {
+    background: #ffffff; /* White background for a clean, modern look */
+    padding: 30px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    max-width: 800px; /* Set max-width for better content fitting */
+    width: 100%;
+}
+
+/* Instructions section */
+.instructions {
+    background-color: #f4f4f4;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+    color: #444444;
+    text-align: left;
+}
+
+.instructions h2 {
+    font-size: 1.5em;
+    color: #333333;
+    margin-bottom: 10px;
+}
+
+.instructions ol {
+    font-size: 1.1em;
+    color: #555555;
+}
+
+.instructions li {
+    margin-bottom: 12px;
+}
+
+/* Heading styling */
+h1 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    color: #1d3557; /* Darker shade for a professional look */
+    font-weight: bold;
+}
+
+/* Sensor data styling */
+p {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f1faee; /* Light, soft background for data display */
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+/* Timer section */
+#timer {
+    font-size: 1.2em;
+    margin-top: 20px;
+}
+
+#time {
+    font-weight: bold;
+    color: #e63946; /* Accent color for timer */
+}
+
+/* Reset button styling */
+button {
+    background-color: #1d3557; /* Dark blue for professional feel */
+    color: #ffffff;
+    font-size: 1.2em;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #457b9d; /* Slightly lighter blue on hover */
+}
+
+/* Hide the reset button initially */
+#resetBtn {
+    display: none;
+}
+
+/* Add responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    p, #time {
+        font-size: 1.2em;
+    }
+
+    button {
+        font-size: 1em;
+    }
+}

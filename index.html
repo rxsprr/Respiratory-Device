@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arduino Data Display</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <style>
+        /* Reset default browser styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body styling with a soft, business-like background */
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(to bottom, #f7f7f7, #e0e0e0);
+            color: #333333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Container for all content */
+        .container {
+            background: #ffffff;
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        /* Instructions section */
+        .instructions {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #444444;
+            text-align: left;
+        }
+
+        .instructions h2 {
+            font-size: 1.5em;
+            color: #333333;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            font-size: 1.1em;
+            color: #555555;
+        }
+
+        .instructions li {
+            margin-bottom: 12px;
+        }
+
+        /* Heading styling */
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #1d3557;
+            font-weight: bold;
+        }
+
+        /* Sensor data styling */
+        p {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f1faee;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        /* Timer section */
+        #timer {
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+
+        #time {
+            font-weight: bold;
+            color: #e63946;
+        }
+
+        /* Start button styling */
+        button {
+            background-color: #1d3557;
+            color: #ffffff;
+            font-size: 1.2em;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #457b9d;
+        }
+
+        /* Add responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            p, #time {
+                font-size: 1.2em;
+            }
+
+            button {
+                font-size: 1em;
+            }
+        }
+
+        /* Sensor data container */
+        .sensor {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin: 15px 0;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: #f1faee;
+            color: #333;
+            text-align: center;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .sensor.belly-highlight {
+            background-color: #d1ecf1;
+            border-color: #007bff;
+            color: #0056b3;
+        }
+
+        .sensor.chest-highlight {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Arduino Data Display</h1>
+        <button id="startButton">Start</button>
+
+        <div id="content" style="display: none;">
+            <div id="timer">
+                <p>Time remaining: <span id="time">00:05</span></p>
+            </div>
+            <div class="container">
+                <h2>Sensor Data</h2>
+                <div id="bellySensor" class="sensor">Belly Sensor: Loading...</div>
+                <div id="chestSensor" class="sensor">Chest Sensor: Loading...</div>
+                <canvas id="sensorChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const startButton = document.getElementById('startButton');
+        const content = document.getElementById('content');
+        const timerElement = document.getElementById('time');
+        const bellySensorElement = document.getElementById('bellySensor');
+        const chestSensorElement = document.getElementById('chestSensor');
+        const ctx = document.getElementById('sensorChart').getContext('2d');
+    
+        let bellySensorData = [];
+        let chestSensorData = [];
+        let timeData = [];
+        let timeRemaining = 300; // 5 minutes (300 seconds)
+        let timerInterval;
+        let dataInterval;
+    
+        // Initialize the graph
+        const sensorGraph = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timeData,
+                datasets: [
+                    {
+                        label: 'Belly Sensor',
+                        data: bellySensorData,
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        fill: false,
+                    },
+                    {
+                        label: 'Chest Sensor',
+                        data: chestSensorData,
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        fill: false,
+                    },
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                    },
+                    y: {
+                        min: 300,
+                        max: 550,
+                    },
+                },
+            },
+        });
+    
+        // Update Timer
+        function updateTimer() {
+            let minutes = Math.floor(timeRemaining / 60);
+            let seconds = timeRemaining % 60;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+    
+            timerElement.textContent = `${minutes}:${seconds}`;
+            timeRemaining--;
+    
+            if (timeRemaining < 0) {
+                clearInterval(timerInterval);
+                clearInterval(dataInterval);
+                alert("Time's up!");
+                timerElement.textContent = '00:00';
+                displayBreathingType();
+            }
+        }
+    
+        // Fetch Data and Update DOM
+        async function fetchData() {
+            try {
+                const response = await fetch('/data');
+                const result = await response.json();
+    
+                const bellySensorMatch = result.value.match(/Belly Sensor:\s*(\d+)/);
+                const chestSensorMatch = result.value.match(/Chest Sensor:\s*(\d+)/);
+    
+                const bellySensorValue = bellySensorMatch ? parseInt(bellySensorMatch[1]) : null;
+                const chestSensorValue = chestSensorMatch ? parseInt(chestSensorMatch[1]) : null;
+    
+                bellySensorElement.textContent = `Belly Sensor: ${bellySensorValue || 'No data'}`;
+                chestSensorElement.textContent = `Chest Sensor: ${chestSensorValue || 'No data'}`;
+    
+                // Change background color based on sensor value
+                if (bellySensorValue > 420) {
+                    bellySensorElement.style.backgroundColor = 'lightblue';
+                } else {
+                    bellySensorElement.style.backgroundColor = '';
+                }
+    
+                if (chestSensorValue > 420) {
+                    chestSensorElement.style.backgroundColor = 'lightgreen';
+                } else {
+                    chestSensorElement.style.backgroundColor = '';
+                }
+    
+                // Store Data
+                if (bellySensorValue !== null) {
+                    bellySensorData.push(bellySensorValue);
+                }
+                if (chestSensorValue !== null) {
+                    chestSensorData.push(chestSensorValue);
+                }
+    
+                // Update Time Data for Graph
+                let currentTime = timeRemaining;
+                timeData.push(currentTime);
+    
+                // Keep data points within a reasonable limit for the graph
+                if (timeData.length > 300) {
+                    timeData.shift();
+                    bellySensorData.shift();
+                    chestSensorData.shift();
+                }
+    
+                // Update the graph with new data
+                sensorGraph.update();
+    
+            } catch (err) {
+                bellySensorElement.textContent = 'Error fetching data';
+                chestSensorElement.textContent = 'Error fetching data';
+            }
+        }
+    
+        // Display Breathing Type based on sensor data comparison
+        function displayBreathingType() {
+            const bellyBreathing = bellySensorData.reduce((sum, value) => sum + value, 0) > chestSensorData.reduce((sum, value) => sum + value, 0);
+            alert(bellyBreathing ? "You were belly breathing" : "You were chest breathing");
+        }
+    
+        // Start button handler
+        startButton.addEventListener('click', () => {
+            startButton.style.display = 'none';
+            content.style.display = 'block';
+    
+            // Start Timer and Fetch Data
+            timerInterval = setInterval(updateTimer, 1000);
+            dataInterval = setInterval(fetchData, 1000);
+        });
+    </script>
+</body>
+</html>
